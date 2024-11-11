@@ -1,0 +1,28 @@
+{% block content %}
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./styles.css') }}">
+</head>
+<div class="chat-container">
+    <div class="chat-header">
+        <h1>MentalHealth AI</h1>
+    </div>
+    
+    <div class="messages" id="messageContainer">
+        <div class="message bot">
+            <p>Hi I am a mental health chatbot, how can I help you</p>
+        </div>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="message {% if message.is_ai %}bot{% else %}user{% endif %}">
+                    <p>{{ message.content }}</p>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <form method="POST" class="chat-input-form">
+        <input type="text" name="user_message" placeholder="Enter your message" required>
+        <button type="submit">Send</button>
+    </form>
+</div>
+{% endblock %}
