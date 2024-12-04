@@ -24,7 +24,7 @@ def login():
             return 'Invalid Login'
     return render_template('login.html')
 
-@auth.route('/logout')
+@auth.route('/logout', methods=['POST'])
 @login_required
 def logout():
     '''Tells flask user has logged out'''

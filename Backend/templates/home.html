@@ -1,10 +1,30 @@
 {% block content %}
 <head>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='./styles.css') }}">
+    <style>
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #logoutButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <div class="chat-container">
     <div class="chat-header">
         <h1>MentalHealth AI</h1>
+        <button id="logoutButton">Logout</button>
+
     </div>
     
     <div class="messages" id="messageContainer">
@@ -20,9 +40,73 @@
         {% endif %}
     </div>
 
-    <form method="POST" class="chat-input-form">
-        <input type="text" name="user_message" placeholder="Enter your message" required>
+    <form class="chat-input-form" id="chatForm">
+        <input type="text" name="user_message" id="userInput" placeholder="Enter your message" required>
         <button type="submit">Send</button>
     </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('chatForm');
+    const messageContainer = document.getElementById('messageContainer');
+    const userInput = document.getElementById('userInput');
+    const logoutButton = document.getElementById('logoutButton');
+    
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(form);
+        const userMessage = formData.get('user_message');
+        
+        if (!userMessage.trim()) return;
+        
+        // Add user message immediately
+        appendMessage(userMessage, false);
+        
+        // Clear input
+        userInput.value = '';
+        
+        // Send to server
+        fetch('/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            appendMessage(data.response, true);
+            scrollToBottom();
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    
+    logoutButton.addEventListener('click', function() {
+        fetch('/logout', {
+            method: 'POST'
+        })
+        .then(response => {
+            if (response.ok) {
+                window.location.href = '/login';  // Redirect to login page after logout
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    });
+    
+    function appendMessage(content, isBot) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isBot ? 'bot' : 'user'}`;
+        
+        const paragraph = document.createElement('p');
+        paragraph.textContent = content;
+        
+        messageDiv.appendChild(paragraph);
+        messageContainer.appendChild(messageDiv);
+        scrollToBottom();
+    }
+    
+    function scrollToBottom() {
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+});
+</script>
 {% endblock %}

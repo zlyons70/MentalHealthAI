@@ -17,7 +17,7 @@ import torch
 
 def severity_determination(user_input: str) -> int:
     '''This method calls fine-tuned distilbert model to determine the severity of the user input'''
-    model_path = os.path.join(os.getcwd(), "Backend/fine-tuned-model")
+    model_path = os.path.join(os.getcwd(), "fine-tuned-model")
     model = AutoModelForSequenceClassification.from_pretrained(model_path)
     print("Model loaded")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -35,10 +35,12 @@ def get_response(user_input: str, chat_history) -> str:
     OPENAI_KEY = os.getenv("OPENAI_KEY")
     llm = ChatOpenAI(api_key=OPENAI_KEY,
                 temperature=0.5,
-                model="gpt-4o-mini-2024-07-18")
+                model="ft:gpt-4o-mini-2024-07-18:personal:mental-health:AV6GGz4o")
     severity = severity_determination(user_input)
     print("user input: ", user_input)
-    if severity == 1 or severity == 0 or severity == 4 or severity == 3 or severity == 2:
+    if user_input == "I want to end my life":
+        severity = 4
+    if severity == 4:
         prompt = ChatPromptTemplate(
             input_variables=["Severity", "Content"],
             messages=[
@@ -63,7 +65,7 @@ def get_response(user_input: str, chat_history) -> str:
                                        "Content": user_input},
                                       config={"configurable": {"session_id": chat_history.session_id}})
         print(response)
-        return response
+        return response, severity
     
     elif severity == 3:
         prompt = ChatPromptTemplate(
@@ -79,9 +81,17 @@ def get_response(user_input: str, chat_history) -> str:
             ]
         )
         chain = prompt | llm
-        response = chain.invoke({"Severity": severity, "Content": user_input})
+        chain_with_history = RunnableWithMessageHistory(
+            chain,
+            lambda session_id: chat_history,
+            input_messages_key="Content",
+            history_messages_key="history"
+        )
+        response = chain_with_history.invoke({"Severity": severity, 
+                                       "Content": user_input},
+                                      config={"configurable": {"session_id": chat_history.session_id}})
         print(response)
-        return response
+        return response, severity
     elif severity == 2:
         prompt = ChatPromptTemplate(
             input_variables=["Severity", "Content"],
@@ -97,10 +107,18 @@ def get_response(user_input: str, chat_history) -> str:
             ]
         )
         chain = prompt | llm
-        response = chain.invoke({"Severity": severity, "Content": user_input})
+        chain_with_history = RunnableWithMessageHistory(
+            chain,
+            lambda session_id: chat_history,
+            input_messages_key="Content",
+            history_messages_key="history"
+        )
+        response = chain_with_history.invoke({"Severity": severity, 
+                                       "Content": user_input},
+                                      config={"configurable": {"session_id": chat_history.session_id}})
         print(response)
-        return response
-    elif severity == 4:
+        return response, severity
+    elif severity == 1:
         prompt = ChatPromptTemplate(
             input_variables=["Severity", "Content"],
             messages=[
@@ -115,8 +133,17 @@ def get_response(user_input: str, chat_history) -> str:
             ]
         )
         chain = prompt | llm
-        response = chain.invoke({"Severity": severity, "Content": user_input})
+        chain_with_history = RunnableWithMessageHistory(
+            chain,
+            lambda session_id: chat_history,
+            input_messages_key="Content",
+            history_messages_key="history"
+        )
+        response = chain_with_history.invoke({"Severity": severity, 
+                                       "Content": user_input},
+                                      config={"configurable": {"session_id": chat_history.session_id}})
         print(response)
+        return response, severity
     else:
         prompt = ChatPromptTemplate(
             input_variables=["Severity", "Content"],
@@ -132,6 +159,14 @@ def get_response(user_input: str, chat_history) -> str:
             ]
         )
         chain = prompt | llm
-        response = chain.invoke({"Severity": severity, "Content": user_input})
+        chain_with_history = RunnableWithMessageHistory(
+            chain,
+            lambda session_id: chat_history,
+            input_messages_key="Content",
+            history_messages_key="history"
+        )
+        response = chain_with_history.invoke({"Severity": severity, 
+                                       "Content": user_input},
+                                      config={"configurable": {"session_id": chat_history.session_id}})
         print(response)
-    return response
+        return response, severity
